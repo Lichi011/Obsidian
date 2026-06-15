@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker --version)",
+      "Bash(wsl --status)",
+      "Bash(where memurai *)",
+      "PowerShell(npx --yes playwright screenshot --viewport-size \"1440,200\" --wait-for-timeout 2500 \"http://localhost:5173\" \"$env:TEMP\\\\storefront-navbar.png\")",
+      "PowerShell(npx --yes playwright screenshot --viewport-size \"1440,900\" --wait-for-timeout 2500 --full-page \"http://localhost:5173\" \"$env:TEMP\\\\storefront-centered.png\")",
+      "PowerShell(npx --yes playwright screenshot --viewport-size \"1440,900\" --wait-for-timeout 2500 \"http://localhost:5173/#concierge\" \"$env:TEMP\\\\storefront-concierge.png\")"
+    ]
+  }
+}
