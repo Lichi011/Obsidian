@@ -322,20 +322,18 @@ def ingest(product_name, on_progress=None, force=False):
     return len(chunks)
 
 
-def retrieve(product_name, question, top_k=None):
-    """Return the top_k chunks most relevant to the question:
+def retrieve(product_name, question):
+    """Return the chunks most relevant to the question:
     [{text, source, score}, ...]. Raises if the product was never ingested.
 
-    If top_k is None (the default), it's derived from the collection size:
-    TOP_K_FRACTION of the stored chunks, floored at MIN_TOP_K and capped at the total.
-    Pass an explicit top_k to override this.
+    How many chunks: TOP_K_FRACTION of the collection, floored at MIN_TOP_K and
+    capped at the total.
     """
     collection = _chroma.get_collection(_collection_name(product_name))
-    if top_k is None:
-        total = collection.count()
-        top_k = round(total * TOP_K_FRACTION)   # 35% of the product's chunks
-        top_k = max(MIN_TOP_K, top_k)           # floor: never fewer than MIN_TOP_K
-        top_k = min(top_k, total)               # cap: never more than exist
+    total = collection.count()
+    top_k = round(total * TOP_K_FRACTION)   # 35% of the product's chunks
+    top_k = max(MIN_TOP_K, top_k)           # floor: never fewer than MIN_TOP_K
+    top_k = min(top_k, total)               # cap: never more than exist
     result = collection.query(query_texts=[question], n_results=top_k)
     docs = result['documents'][0]
     metas = result['metadatas'][0]
