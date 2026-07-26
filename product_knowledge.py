@@ -32,7 +32,12 @@ COMMENTS_PER_POST = 5
 # posts (by comment count) to keep us well within RapidAPI's request quota. The other
 # posts still contribute their title + body as chunks.
 POSTS_WITH_COMMENTS = 8
-TOP_K = 10  # chunks handed to the LLM per question
+# How many chunks to hand the LLM per question — computed dynamically from the size of
+# the product's collection so a wide net is cast over small corpora without dumping the
+# whole thing. retrieve() takes TOP_K_FRACTION of the stored chunks, floored at MIN_TOP_K
+# (so sparse products still get usable context) and capped at the collection size.
+TOP_K_FRACTION = 0.35  # share of a product's stored chunks to retrieve per question
+MIN_TOP_K = 5          # ...but never fewer than this, even for tiny corpora
 
 # Reuse previously-scraped Reddit knowledge for this many days before re-scraping. Reddit
 # opinions drift over time, so we refresh a product after the TTL rather than caching it
@@ -317,10 +322,20 @@ def ingest(product_name, on_progress=None, force=False):
     return len(chunks)
 
 
-def retrieve(product_name, question, top_k=TOP_K):
+def retrieve(product_name, question, top_k=None):
     """Return the top_k chunks most relevant to the question:
-    [{text, source, score}, ...]. Raises if the product was never ingested."""
+    [{text, source, score}, ...]. Raises if the product was never ingested.
+
+    If top_k is None (the default), it's derived from the collection size:
+    TOP_K_FRACTION of the stored chunks, floored at MIN_TOP_K and capped at the total.
+    Pass an explicit top_k to override this.
+    """
     collection = _chroma.get_collection(_collection_name(product_name))
+    if top_k is None:
+        total = collection.count()
+        top_k = round(total * TOP_K_FRACTION)   # 35% of the product's chunks
+        top_k = max(MIN_TOP_K, top_k)           # floor: never fewer than MIN_TOP_K
+        top_k = min(top_k, total)               # cap: never more than exist
     result = collection.query(query_texts=[question], n_results=top_k)
     docs = result['documents'][0]
     metas = result['metadatas'][0]
