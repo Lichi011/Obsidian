@@ -11,6 +11,7 @@ export default defineConfig({
       '/search': 'http://localhost:5000',
       '/talk': 'http://localhost:5000',
       '/watch': 'http://localhost:5000',
+      '/auth': 'http://localhost:5000',
     },
   },
 })

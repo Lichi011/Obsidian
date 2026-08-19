@@ -8,7 +8,7 @@ const SUGGESTIONS = [
   'Mechanical keyboard, quiet switches',
 ]
 
-export default function Concierge({ onLoadingChange, onTalk }) {
+export default function Concierge({ onLoadingChange, onTalk, user, onSignIn }) {
   const [text, setText] = useState('')
   const [hint, setHint] = useState('')
   const [hintErr, setHintErr] = useState(false)
@@ -205,7 +205,14 @@ export default function Concierge({ onLoadingChange, onTalk }) {
 
             <div className="product-grid">
               {results.map((p, i) => (
-                <ProductCard key={p.id || p.name || i} product={p} index={i} onTalk={onTalk} />
+                <ProductCard
+                  key={p.id || p.name || i}
+                  product={p}
+                  index={i}
+                  onTalk={onTalk}
+                  user={user}
+                  onSignIn={onSignIn}
+                />
               ))}
             </div>
           </div>

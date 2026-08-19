@@ -44,6 +44,139 @@
   50% { opacity: 0.45; transform: scale(0.8); }
 }
 /* Global Reddit-API quota chip */
+/* --- Sign-in wall ---------------------------------------------------------- */
+.auth-splash {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+}
+.login-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background:
+    radial-gradient(80% 60% at 50% 0%, rgba(198, 255, 61, 0.06), transparent 70%),
+    var(--bg-primary);
+}
+.login-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  max-width: 440px;
+  width: 100%;
+}
+.login-title {
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  line-height: 1.1;
+  color: var(--text-primary);
+  margin-top: 0.5rem;
+}
+.login-sub {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 38ch;
+}
+.login-btn {
+  margin-top: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.login-fine {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+.nav-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.nav-watch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.nav-watch:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+.nav-watch-star {
+  color: var(--glow-lime);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+@media (max-width: 520px) {
+  .nav-watch-label { display: none; }
+}
+.nav-auth {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.nav-auth:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+.nav-auth-label {
+  max-width: 12ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-auth-action {
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+  border-left: 1px solid var(--border-strong);
+  padding-left: 0.5rem;
+}
+.nav-auth-in {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-color: var(--text-primary);
+  font-weight: 600;
+}
+.nav-auth-in:hover {
+  color: var(--bg-primary);
+  opacity: 0.9;
+}
+.nav-auth-g {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+@media (max-width: 520px) {
+  .nav-auth-label { display: none; }
+}
 .nav-quota {
   display: inline-flex;
   align-items: center;
@@ -546,6 +679,57 @@
   justify-content: space-between;
   gap: 0.8rem;
   margin-top: 0.7rem;
+}
+.watch-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.watch-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--bg-primary);
+}
+.watch-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.watch-item-name {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.watch-item-meta {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+.watch-item-remove {
+  flex-shrink: 0;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.watch-item-remove:hover {
+  border-color: #ff6b6b;
+  color: #ff6b6b;
 }
 .watch-off {
   background: none;

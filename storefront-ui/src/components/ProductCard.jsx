@@ -11,14 +11,14 @@ const FALLBACK_GLOWS = [
   'radial-gradient(120% 120% at 35% 25%, #ffae2b 0%, #7a4a0b 38%, #120c00 70%)',
 ]
 
-export default function ProductCard({ product, index, onTalk }) {
+export default function ProductCard({ product, index, onTalk, user, onSignIn }) {
   const glow = product.glow || FALLBACK_GLOWS[index % FALLBACK_GLOWS.length]
   const initial = (product.name || '?').trim().charAt(0).toUpperCase()
 
-  // Price-watch toggle: closed -> form -> watching.
+  // Price-watch toggle: closed -> form -> watching. The email now comes from the
+  // logged-in session (server-side), so the form only needs an optional target price.
   const [watchOpen, setWatchOpen] = useState(false)
   const [watching, setWatching] = useState(false)
-  const [email, setEmail] = useState('')
   const [target, setTarget] = useState('')
   const [watchMsg, setWatchMsg] = useState('')
   const [watchErr, setWatchErr] = useState(false)
@@ -26,11 +26,6 @@ export default function ProductCard({ product, index, onTalk }) {
 
   const enableWatch = async (e) => {
     e?.preventDefault()
-    if (!email.trim()) {
-      setWatchErr(true)
-      setWatchMsg('Enter the email to notify.')
-      return
-    }
     setSubmitting(true)
     setWatchErr(false)
     try {
@@ -40,20 +35,21 @@ export default function ProductCard({ product, index, onTalk }) {
         body: JSON.stringify({
           product: product.name,
           url: product.purchase_link || '',
-          email: email.trim(),
           baseline_price: product.price || '',
           target_price: target.trim() || null,
         }),
       })
       const data = await res.json()
+      if (res.status === 401) throw new Error('Please sign in to watch prices.')
       if (!res.ok) throw new Error(data.error || 'Could not start the watch.')
       setWatching(true)
       setWatchOpen(false)
       setWatchErr(false)
+      const who = user?.email || 'you'
       setWatchMsg(
         target.trim()
-          ? `Watching — we’ll email ${email.trim()} when it hits ₹${target.trim()}.`
-          : `Watching — we’ll email ${email.trim()} if the price drops.`,
+          ? `Watching — we’ll email ${who} when it hits ₹${target.trim()}.`
+          : `Watching — we’ll email ${who} if the price drops.`,
       )
     } catch (err) {
       setWatchErr(true)
@@ -68,7 +64,7 @@ export default function ProductCard({ product, index, onTalk }) {
       await fetch('/watch/disable', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product: product.name, email: email.trim() }),
+        body: JSON.stringify({ product: product.name }),   // scoped to session on the server
       })
     } catch (_) { /* best-effort */ }
     setWatching(false)
@@ -110,8 +106,12 @@ export default function ProductCard({ product, index, onTalk }) {
         </button>
       )}
 
-      {/* Price-watch control */}
-      {watching ? (
+      {/* Price-watch control — requires a logged-in user */}
+      {!user ? (
+        <button className="btn card-watch" onClick={onSignIn}>
+          Sign in to watch price
+        </button>
+      ) : watching ? (
         <div className="watch-active">
           <span className="watch-line">{watchMsg}</span>
           <button className="watch-off" onClick={disableWatch}>Stop watching</button>
@@ -119,18 +119,12 @@ export default function ProductCard({ product, index, onTalk }) {
       ) : watchOpen ? (
         <form className="watch-form" onSubmit={enableWatch}>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            autoFocus
-          />
-          <input
             type="text"
             inputMode="numeric"
             value={target}
             onChange={(e) => setTarget(e.target.value)}
             placeholder="Target price (optional)"
+            autoFocus
           />
           <div className="watch-form-row">
             <button type="submit" className="btn btn-solid" disabled={submitting}>
@@ -147,7 +141,7 @@ export default function ProductCard({ product, index, onTalk }) {
           Watch price
         </button>
       )}
-      {!watchOpen && !watching && watchMsg && (
+      {user && !watchOpen && !watching && watchMsg && (
         <span className={`watch-line ${watchErr ? 'err' : ''}`}>{watchMsg}</span>
       )}
     </article>

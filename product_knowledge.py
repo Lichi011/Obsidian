@@ -18,6 +18,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 import requests
@@ -60,28 +61,55 @@ FETCH_WORKERS = 4  # polite parallelism for the comment fetches
 _CHROMA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.chroma')
 _chroma = chromadb.PersistentClient(path=_CHROMA_DIR)
 
-# Latest RapidAPI quota seen on a response, so the UI can warn before exhaustion.
-# The free tier is small (100/month), so we surface it prominently. We persist the
-# last-known value to a small file so the meter shows immediately after a restart
-# (it self-corrects on the next real API call).
-_QUOTA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.quota.json')
+# Latest RapidAPI quota seen on a response, so the UI can warn before exhaustion. The free
+# tier is small (100/month). We persist the last-known value to the ApiQuota table so the
+# meter shows immediately after a restart (it self-corrects on the next real API call).
+# DB access needs a Flask app context; init_product_knowledge(app) wires it in. Run
+# standalone (no app), quota stays in-memory only. The DB stores calls_used/calls_limit;
+# RapidAPI reports remaining, so remaining = calls_limit - calls_used.
+_QUOTA_PROVIDER = 'rapidapi_reddit'
 _quota = {'remaining': None, 'limit': None}
+_app = None
 
 
-def _load_quota():
+def init_product_knowledge(app):
+    """Give this module the Flask app so quota persists to the DB. Call once at startup."""
+    global _app
+    _app = app
+    _load_quota_from_db()
+
+
+def _load_quota_from_db():
+    if _app is None:
+        return
     try:
-        with open(_QUOTA_FILE) as f:
-            saved = json.load(f)
-        _quota['remaining'] = saved.get('remaining')
-        _quota['limit'] = saved.get('limit')
+        from models import ApiQuota
+        with _app.app_context():
+            row = ApiQuota.query.filter_by(provider=_QUOTA_PROVIDER).first()
+            if row and row.calls_limit is not None:
+                _quota['limit'] = row.calls_limit
+                _quota['remaining'] = row.calls_limit - (row.calls_used or 0)
     except Exception:
         pass
 
 
 def _save_quota():
+    if _app is None:
+        return
     try:
-        with open(_QUOTA_FILE, 'w') as f:
-            json.dump(_quota, f)
+        from models import db, ApiQuota
+        with _app.app_context():
+            row = db.session.get(ApiQuota, _QUOTA_PROVIDER)
+            if row is None:
+                row = ApiQuota(provider=_QUOTA_PROVIDER)
+                db.session.add(row)
+            lim, rem = _quota.get('limit'), _quota.get('remaining')
+            if lim is not None:
+                row.calls_limit = lim
+                if rem is not None:
+                    row.calls_used = max(0, lim - rem)
+            row.window_start = datetime.utcnow()
+            db.session.commit()
     except Exception:
         pass
 
@@ -89,9 +117,6 @@ def _save_quota():
 def get_quota():
     """Most recent {remaining, limit} from RapidAPI's rate-limit headers."""
     return dict(_quota)
-
-
-_load_quota()
 
 
 def _rapid_get(path, params):

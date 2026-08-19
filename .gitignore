@@ -2,8 +2,10 @@ __pycache__/
 *.py[cod]
 *.env
 db.sqlite3
+obsidian.db
 venv/
 .env
 .quota.json
 .watches.json
 .chroma/
+instance/
